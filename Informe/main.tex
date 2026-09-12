@@ -1,0 +1,628 @@
+
+\documentclass[11pt,letterpaper]{article}
+
+%%% LANGUAGE: Spanish
+\usepackage[spanish,english]{babel}
+\addto\shorthandsspanish{\spanishdeactivate{~<>}}
+
+%%% ENCODING
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{epsfig}
+
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\usepackage{textcomp}
+%%
+%%%%GENERAL INFROMATION%%%%
+%%
+
+\newcommand{\theCampus}{Campus Vitacura}
+\newcommand{\theAssignment}{Sistemas de Información para la Gestión}
+\newcommand{\therevision}{MF/BG/DL/SM/AP}
+
+
+\usepackage{booktabs} 	
+\usepackage{array} 		
+\usepackage{paralist} 	
+\usepackage{verbatim} 	
+\usepackage{subfigure}
+\usepackage{siunitx}
+\usepackage{tabularx}
+
+% FECHA
+\usepackage{datetime}
+\newdateformat{monthyeardate}{%
+  \monthname[\THEMONTH], \THEYEAR}
+
+%%% PAGE DIMENSIONS
+\usepackage[margin=25mm,inner=30mm]{geometry}
+
+%%% HEADERS & FOOTERS   %%%
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.5pt}
+
+\renewcommand{\footrulewidth}{0.5pt}
+\lhead{\includegraphics[scale=.15]{Logos/header_utfsm.png}}\cfoot{}
+\cfoot{\textbf{\thepage}}
+\rfoot{\therevision}
+\lfoot{\theAssignment}\chead{}
+\rhead{}
+
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\usepackage{float}
+
+\usepackage[numbers]{natbib}
+
+%%% TABLE OF CONTENTS APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind}
+
+\makeatletter
+\def\tableofcontents{%
+ \newpage
+ \centerline{\large\scshape Tabla de Contenidos} 
+ \vspace*{0.3in}
+ \@mkboth{CONTENTS}{CONTENTS}
+ \@starttoc{toc}
+}
+\makeatother
+
+\usepackage{lipsum}
+\usepackage[section]{placeins}
+
+%------------------------------------------------------------------------------
+%%%% TITLE PAGE
+%------------------------------------------------------------------------------
+\begin{document}
+\selectlanguage{spanish}
+
+\begin{titlepage}
+\begin{figure}[H]
+\includegraphics[width = 0.4\linewidth]{Logos/logo_di.png}
+\hspace{144pt}
+\vspace{-70pt}
+\end{figure}
+\vspace{60mm}
+\begin{center}
+\hrule
+\vspace{2mm}
+{\Huge \textbf{\sc Entrega 1: }}\\
+{\Large \sc{Propuesta SIG para Pyme: Bob's Coffee}}
+\vspace{2mm}
+\hrule
+\vspace{1cm}
+
+%%%%AUTHORS%%%%
+\centering
+
+{\textbf{Martín Fuenzalida Sachs} \\
+{\small Ingeniería Civil Industrial, 21.010.745-2}}\\
+\textbf{Benjamín Gacitua Paredes} \\
+{\small Ingeniería Civil Industrial, 21.431.497-5 }\\
+\textbf{Dannys Lopez Ulloa} \\
+{\small Ingeniería Civil Industrial, 20.830.315-5 }\\
+\textbf{Sergio Martinez Gonzalez} \\
+{\small Ingeniería Civil Industrial, 21.257.624-7}\\
+\textbf{Anesti Papasideris Barbosa} \\
+{\small Ingeniería Civil Industrial, 21.295.172-1}\\
+\vspace{0.5cm}
+{\small \textbf{Repositorio GitHub:} \url{https://github.com/Sergi9787/ICN292-Martinez-Sergio/}}
+
+\vfill
+\textsc{\monthyeardate\today}\\[0.5cm]
+\textsc{\theCampus}
+\end{center}
+
+\clearpage
+\parindent=0mm
+
+\end{titlepage}
+
+%------------------------------------------------------------------------------
+%%%% ABSTRACT %%%%%------------------------------------------------------------------------------
+
+%%------------------------------------------------------------------------------
+%%%% TABLE OF CONTENTS %%%%%------------------------------------------------------------------------------
+\tableofcontents
+\clearpage
+
+%%--------------------------------------------------
+%%% DOCUMENT %%%%
+%%--------------------------------------------------
+\newpage
+
+\section{Pyme y problema}
+
+\subsection{Identificación de la PYME}
+\begin{itemize}
+    \item \textbf{Nombre comercial:} Bob's Coffee.
+    \item \textbf{Rubro / Giro:} Gastronómico (Cafetería y restaurante, comercialización de café al paso, repostería, sándwiches y almuerzos ejecutivos).
+    \item \textbf{Tamaño aproximado:} Pequeña empresa gastronómica. Cuenta con una dotación aproximada de 10 trabajadores operando en un único turno, además del dueño y administrador general. El local comercial dispone de una capacidad para 60 personas sentadas y un mesón de atención rápida.
+    \item \textbf{Ubicación:} Calle Argomedo 279, comuna de Antofagasta, Región de Antofagasta, Chile.
+\end{itemize}
+
+\subsection{Evidencia de existencia}
+La existencia real y operación de la PYME se acredita mediante las siguientes fuentes directas y constatables:
+\begin{enumerate}
+    \item \textbf{Sitio Web Oficial:} Registro del sitio web institucional accesible en \url{https://www.bobscoffee.cl/}
+    \item \textbf{Presencia en Redes Sociales:} Perfil público oficial en Instagram (\texttt{@bobscoffee.cl}), donde se promociona la carta de productos, horarios de atención y contacto en el local de Argomedo 279.
+    \item \textbf{Registro de Entrevista / Toma de Datos:} Información levantada mediante entrevista directa con el dueño y administrador general, Sr. Luis Jiménez.
+\end{enumerate}
+
+\subsection{Problema de negocio e impacto}
+\textbf{Problema de negocio en una frase medible:} \\
+\textit{Bob's Coffee presenta dificultades para mantener información actualizada y confiable sobre sus insumos debido a revisiones poco frecuentes (semanales en lugar de diarias) y registros de consumo incompletos, lo que obliga a tomar decisiones de reposición basadas en estimaciones empíricas y recurrir a compras de urgencia no planificadas ante quiebres de stock.}
+
+\vspace{0.3cm}
+\textbf{Impacto multidimensional en la operación:}
+\begin{itemize}
+    \item \textbf{Costo:} Sobrecostos económicos generados por la compra de insumos a precio minorista en comercios cercanos ante emergencias, perdiendo los beneficios de compra por volumen con proveedores frecuentes (como Marley's Coffee), sumado al riesgo de mermas y vencimiento de insumos perecibles (pollo, huevos, pan).
+    \item \textbf{Tiempo:} Pérdida de tiempo del personal de cocina y compras al tener que gestionar ad-hoc la adquisición de faltantes de última hora durante la jornada operativa.
+    \item \textbf{Servicio:} Riesgo constante de quiebres de stock de insumos críticos en horas de alta demanda (almuerzos o cafetería), impidiendo la preparación de productos de la carta y afectando la experiencia del cliente.
+    \item \textbf{Error:} Inexactitud del inventario teórico provocada por la falta de registro de las preparaciones matutinas adelantadas en cocina y el uso de revisiones semanales basadas en la estimación visual ("al ojo").
+\end{itemize}
+
+\subsection{Objetivo del SIG propuesto}
+El Sistema de Información para la Gestión (SIG) propuesto tiene como objetivo central registrar y centralizar de manera ágil los movimientos de existencias (entradas, consumos, mermas y conteos) y generar alertas automáticas de stock mínimo junto con sugerencias de reposición trazables. 
+
+Con esto, el sistema apoya directamente la \textbf{decisión de compra} del administrador/encargado, mejorando la \textbf{operación de abastecimiento} al pasar de un esquema reactivo y manual a una planificación proactiva, eliminando las compras de urgencia y asegurando la disponibilidad continua de los insumos prioritarios (café, huevos, pollo y pan) al menor costo operativo.
+
+\newpage
+
+\section{Requerimientos desde cero}
+
+\subsection{Actores y roles}
+Se definen los siguientes actores (humanos y sistemas) que interactúan directa o indirectamente con el SIG:
+
+\begin{itemize}
+    \item \textbf{Administrador General (Luis Jiménez):} Usuario con acceso completo al sistema. Se encarga de supervisar la gestión general, definir los umbrales de stock mínimo por insumo, revisar y aprobar las sugerencias de reposición, consultar indicadores clave (KPIs) y administrar las cuentas de usuario.
+    \item \textbf{Encargado de Compras y Recepción:} Responsable de registrar las órdenes de compra proyectadas, formalizar el ingreso de insumos tras su recepción física (verificando recepciones totales o parciales) y mantener actualizado el registro de proveedores. Adicionalmente, participa en la revisión física periódica de las existencias en bodega.
+    \item \textbf{Personal de Cocina / Operaciones:} Responsable de registrar los consumos de insumos (al cierre de jornada o por tandas de preparación anticipada en la mañana) y reportar mermas o desperdicios especificando el motivo (vencimiento, daño o preparación). También realiza conteos físicos de los insumos almacenados en su área.
+    \item \textbf{Sistemas Externos / Proveedores (Actores Externos):} Entidades externas al local, tales como Marley's Coffee y distribuidores locales de insumos (huevos, pollo, pan), que reciben las solicitudes de pedido enviadas por el encargado o administrador.
+\end{itemize}
+
+\subsection{Alcance del Sistema (In / Out)}
+
+\textbf{Alcance Incluido (IN):}
+\begin{itemize}
+    \item Catálogo unificado de insumos prioritarios (café, huevos, pollo, pan) con sus unidades de medida base y categorías.
+    \item Gestión de proveedores y vinculación con insumos y plazos de entrega ($lead\ time$).
+    \item Registro de entradas por recepción de compras (totales o parciales) y actualización de stock en tiempo real.
+    \item Registro simplificado de salidas (consumo operacional diario y mermas por vencimiento o daño).
+    \item Módulo de conteo físico periódico y generación automática de ajustes de stock por diferencias.
+    \item Sistema de alertas por alcance de stock mínimo y módulo generador de sugerencias de reposición.
+    \item Visualización de indicadores clave de gestión (KPIs de compras urgentes, descuadres y frecuencia de conteo).
+    \item Control de acceso basado en roles y trazabilidad de operaciones por usuario.
+\end{itemize}
+
+\textbf{Alcance Excluido (OUT):}
+\begin{itemize}
+    \item Procesamiento de pagos de clientes o integración directa con POS / Redcompra.
+    \item Módulo de facturación electrónica, contabilidad general o remuneraciones de personal.
+    \item Módulo de gestión de pedidos en mesa, comandas de garzones o servicios de delivery.
+    \item Integración automatizada vía API con el sistema legacy Fudo o reemplazo directo e inmediato de su módulo de caja.
+    \item Descuento automático de insumos en tiempo real por cada ticket de venta mediante recetario dinámico (se prefiere consumo agregado para evitar rigidez operacional).
+\end{itemize}
+
+\subsection{Requisitos Funcionales y No Funcionales (Priorizados y Trazados)}
+
+Para la priorización se utiliza la metodología \textbf{MoSCoW}:
+\begin{itemize}
+    \item \textbf{Must have (M):} Requisito imprescindible para el prototipo funcional de la Entrega 1 y 2.
+    \item \textbf{Should have (S):} Requisito deseable de alto valor que se incluirá según factibilidad.
+    \item \textbf{Could have (C):} Funcionalidad secundaria u opcional.
+    \item \textbf{Won't have (W):} Funcionalidad fuera del alcance de estas entregas.
+\end{itemize}
+
+\subsubsection{Requisitos Funcionales (RF)}
+
+\begin{description}
+    \item[\textbf{RF01 (Must):}] \textbf{Gestión de insumos.} Permitir crear, editar y consultar insumos con unidad base, categoría y stock mínimo. \textit{Trazabilidad:} Resuelve la falta de estandarización en el control de insumos críticos.
+    
+    \item[\textbf{RF02 (Must):}] \textbf{Gestión de proveedores.} Registrar proveedores, asociando insumos suministrados y plazos de entrega (\textit{lead time}). \textit{Trazabilidad:} Evita compras tardías que derivan en adquisiciones de emergencia.
+    
+    \item[\textbf{RF03 (Must):}] \textbf{Recepción de compras.} Registrar compras pendientes e ingresar recepciones totales o parciales, aumentando el stock solo tras la entrega física. \textit{Trazabilidad:} Elimina la incertidumbre sobre insumos en tránsito y registros duplicados.
+    
+    \item[\textbf{RF04 (Must):}] \textbf{Registro de salidas.} Registrar salidas discriminando si corresponde a consumo operacional diario o a mermas (vencimiento/daño). \textit{Trazabilidad:} Corrige el problema de consumos omitidos y permite medir la merma real.
+    
+    \item[\textbf{RF05 (Must):}] \textbf{Conteos y ajustes.} Permitir conteos físicos periódicos y generar ajustes automáticos respaldados por fecha, usuario y motivo. \textit{Trazabilidad:} Aborda las revisiones imprecisas e independiza el stock real de estimaciones visuales.
+    
+    \item[\textbf{RF06 (Must):}] \textbf{Consulta e historial.} Consultar existencias en tiempo real y visualizar el historial completo de movimientos por insumo. \textit{Trazabilidad:} Entrega visibilidad centralizada e inmediata del inventario.
+    
+    \item[\textbf{RF07 (Must):}] \textbf{Alertas de stock mínimo.} Notificar automáticamente cuando las existencias alcancen el umbral crítico configurado. \textit{Trazabilidad:} Avisa la escasez antes de llegar al quiebre de stock.
+    
+    \item[\textbf{RF08 (Should):}] \textbf{Sugerencia de reposición.} Generar listados de compra considerando consumo medio, \textit{lead time} y pedidos en tránsito. \textit{Trazabilidad:} Reemplaza la decisión heurística ("al ojo") por una estimación basada en datos.
+    
+    \item[\textbf{RF09 (Must):}] \textbf{Control de usuarios.} Gestionar roles de acceso y vincular la identidad del usuario responsable a cada movimiento. \textit{Trazabilidad:} Garantiza trazabilidad y previene registros anónimos.
+    
+    \item[\textbf{RF10 (Should):}] \textbf{Panel de indicadores.} Desplegar KPIs clave (compras urgentes, descuadres) y permitir la exportación de reportes. \textit{Trazabilidad:} Ofrece métricas al administrador para evaluar la gestión global.
+\end{description}
+
+\subsubsection{Requisitos No Funcionales (RNF)}
+
+\begin{table}[H]
+\centering
+\caption{Requisitos No Funcionales trazados a las restricciones del entorno}
+\label{tab:rnf}
+\begin{tabularx}{\textwidth}{p{0.12\textwidth}Xp{0.15\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{ID} & \textbf{Descripción del Requisito No Funcional} & \textbf{Prioridad} & \textbf{Criterio de Aceptación / Trazabilidad} \\
+\midrule
+\textbf{RNF01} & \textbf{Usabilidad y Eficiencia:} Las pantallas de ingreso (recepción/salida) deben ser intuitivas, permitiendo completar un registro en menos de 2 minutos. & Must (M) & Garantiza baja fricción para evitar la baja adopción por parte del personal de cocina. \\
+\midrule
+\textbf{RNF02} & \textbf{Seguridad y Control de Acceso:} El sistema debe restringir las funcionalidades según el rol asignado al usuario (RBAC). & Must (M) & Protege la integridad de los datos de inventario y compras contra modificaciones no autorizadas. \\
+\midrule
+\textbf{RNF03} & \textbf{Integridad de Datos:} El sistema debe validar que los valores ingresados sean numéricos positivos y realizar conversión automática entre unidades de compra y base. & Must (M) & Previene errores de digitación e inconsistencias en el cálculo de existencias. \\
+\midrule
+\textbf{RNF04} & \textbf{Respaldo y Recuperación:} El sistema debe permitir la exportación periódica de la base de datos a formato ejecutable o CSV. & Must (M) & Asegura la disponibilidad de los datos históricos ante fallos en la ejecución local. \\
+\midrule
+\textbf{RNF05} & \textbf{Reproducibilidad y Despliegue:} El prototipo debe ser capaz de instalarse y ejecutarse en entornos \textit{localhost} mediante una secuencia de comandos documentada. & Must (M) & Garantiza que el prototipo sea desplegable y ejecutable localmente por los evaluadores en la Entrega 2. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+
+\section{Comparación entre el proceso actual (AS-IS) y el propuesto (TO-BE)}
+
+El rediseño conserva la estructura del modelo actual —un proceso principal de control y reposición más tres subprocesos— para que la comparación sea punto a punto. El cambio de fondo no está en las actividades que se ejecutan, sino en \textbf{quién las gatilla y sobre qué información se decide}: el AS-IS es reactivo y arranca cuando una persona detecta un faltante (ver Figuras \ref{fig:asis_1} a \ref{fig:asis_4} en el Anexo A); el TO-BE es gatillado por el sistema, que mantiene la existencia teórica actualizada y dispara la reposición antes del quiebre (ver Figuras \ref{fig:tobe_1} a \ref{fig:tobe_4} en el Anexo A). El SIG se incorpora como un carril propio dentro del contenedor de Bob's Coffee, con actividades de tipo servicio.
+
+
+\subsection{Qué aporta la intervención del SIG}
+
+\textbf{Se automatiza.} La actualización de existencias, la comparación contra el stock mínimo, la alerta con su sugerencia de reposición, la propuesta de proveedor y el contraste de lo recibido con la orden de compra (como se ilustra en las Figuras \ref{fig:tobe_1}, \ref{fig:tobe_3} y \ref{fig:tobe_4}). Eran decisiones humanas por observación; pasan a ser cálculos que el encargado valida.
+
+\textbf{Se controla.} El punto donde el proceso perdía información. El AS-IS contempla formalmente una ruta que termina en «Preparación sin consumo registrado» (Figura \ref{fig:asis_4}); en el TO-BE esa compuerta se elimina y el descuento se traslada al retiro de bodega (Figura \ref{fig:tobe_2}). El mismo criterio aplica a mermas, conteos, diferencias de recepción y compras de urgencia. El horizonte de detección baja de una semana a un día.
+
+\textbf{Se mide.} Exactitud de inventario, porcentaje de compras de urgencia, quiebres por insumo crítico, merma por período y cumplimiento de proveedor, todos sobre la misma base de datos que opera el proceso: el registro que permite operar es el que permite controlar.
+
+En conjunto se atacan las cuatro dimensiones del problema: \textbf{error}, por la eliminación del consumo no registrado; \textbf{costo}, por el desplazamiento de la compra de urgencia a excepción medida; \textbf{tiempo}, porque la necesidad se detecta antes de la jornada crítica; y \textbf{servicio}, porque rechazos y faltas de suministro reabren la necesidad en lugar de cerrar el proceso.
+
+\newpage
+
+\section{Arquitectura lógica y stack tentativo}
+
+Para el desarrollo del SIG de Bob’s Coffee se propone una arquitectura simple, de bajo costo y fácil de ejecutar localmente (cuyo diagrama detallado se presenta en la Figura \ref{fig:arquitectura_anexo} del Anexo A). El sistema estará orientado al registro de movimientos de inventario, compras, recepciones y conteos, de manera que la información pueda mantenerse actualizada y utilizarse para generar alertas, sugerencias de reposición e indicadores básicos.
+
+La arquitectura se divide en cuatro componentes principales. En primer lugar, una interfaz web donde los usuarios podrán registrar y consultar información. En segundo lugar, una capa de lógica encargada de validar los datos, actualizar existencias y generar alertas o sugerencias. En tercer lugar, una base de datos donde se almacenará la información del proceso. Finalmente, un módulo de analítica permitirán calcular y visualizar indicadores relacionados con inventario y compras.
+
+El alcance de esta arquitectura se concentra en inventario y reposición de insumos. Por esta razón, no se consideran en esta primera etapa funciones como pagos, facturación, remuneraciones, delivery, reservas o administración completa de mesas.
+
+\subsection{Componentes y tecnologías propuestas}
+
+En la Tabla \ref{tab:componentes_arq} se resumen los componentes principales representados en la arquitectura del sistema:
+
+\begin{table}[H]
+\centering
+\caption{Componentes principales de la arquitectura}
+\label{tab:componentes_arq}
+\begin{tabularx}{\textwidth}{p{0.24\textwidth}Xp{0.25\textwidth}}
+\toprule
+\textbf{Componente} & \textbf{Función dentro del sistema} & \textbf{Tecnología propuesta} \\
+\midrule
+
+Interfaz web &
+Registrar compras, recepciones, consumos, mermas y conteos; consultar stock, alertas y KPI. &
+HTML, CSS y JavaScript. \\
+
+Lógica del sistema &
+Validar datos, actualizar existencias, comparar stock con mínimos y generar sugerencias de reposición. &
+Python + Flask. \\
+
+Persistencia &
+Guardar insumos, proveedores, compras, movimientos, conteos y usuarios. &
+SQLite. \\
+
+Analítica / KPI &
+Calcular y mostrar indicadores relacionados con inventario y compras. &
+Chart.js. \\
+
+Control de versiones &
+Mantener el código y la documentación del proyecto. &
+GitHub. \\
+
+Ejecución &
+Ejecutar el prototipo durante la Entrega 2. &
+localhost. \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Flujo de información}
+
+El flujo comienza cuando un usuario registra una acción desde la interfaz web. La información es recibida por Flask, donde se valida antes de ser almacenada en SQLite. Luego, la lógica del sistema utiliza esos datos para actualizar existencias, revisar niveles mínimos de stock y generar alertas o sugerencias de reposición.
+
+Los indicadores utilizan la misma información almacenada en la base de datos, evitando registros paralelos o cálculos basados en datos distintos. De esta forma, el mismo registro que permite operar el sistema también sirve para controlar su funcionamiento.
+
+\subsection{Stack tentativo}
+
+Para la Entrega 2 se propone utilizar HTML, CSS y JavaScript para la interfaz, Python con Flask para la lógica del sistema y SQLite como base de datos. Para la visualización de indicadores se considera Chart.js.
+
+La elección de este stack se debe principalmente a que el prototipo debe ser simple de implementar y fácil de ejecutar de manera local. SQLite permite trabajar con una base de datos sin tener que configurar un servidor adicional, mientras que Flask permite desarrollar una aplicación web en Python de forma relativamente sencilla.
+
+\subsection{Reproducibilidad}
+
+El prototipo se diseñará para que pueda ejecutarse de forma local en cualquier computador que tenga Python instalado. La idea es que una persona que descargue el proyecto pueda abrirlo siguiendo una serie de pasos simples, sin necesitar instalar un servidor externo ni configurar una base de datos independiente.
+
+El repositorio incluirá un archivo \texttt{README.md} con las instrucciones de instalación y un archivo \texttt{requirements.txt} con las librerías necesarias para ejecutar el sistema.
+
+El procedimiento será el siguiente:
+
+\begin{enumerate}
+
+    \item \textbf{Descargar o clonar el proyecto desde GitHub.}
+
+    Esto permite obtener todos los archivos necesarios del sistema en una carpeta del computador.
+
+    \item \textbf{Abrir una terminal o consola dentro de la carpeta del proyecto.}
+
+    Desde esa carpeta se ejecutarán los comandos necesarios para iniciar el sistema.
+
+    \item \textbf{Crear un entorno virtual de Python.}
+
+    El entorno virtual permite instalar las librerías del proyecto sin afectar otras instalaciones de Python del computador.
+
+    En Windows se puede crear con:
+
+    \begin{verbatim}
+    python -m venv .venv
+    \end{verbatim}
+
+    Luego se activa con:
+
+    \begin{verbatim}
+    .venv\Scripts\activate
+    \end{verbatim}
+
+    \item \textbf{Instalar las dependencias del proyecto.}
+
+    Con el entorno virtual activado, se ejecuta:
+
+    \begin{verbatim}
+    pip install -r requirements.txt
+    \end{verbatim}
+
+    Este comando instala automáticamente Flask y las demás librerías utilizadas por el prototipo.
+
+    \item \textbf{Ejecutar la aplicación.}
+
+    Una vez instaladas las dependencias, se inicia el sistema con:
+
+    \begin{verbatim}
+    python app.py
+    \end{verbatim}
+
+    Al ejecutar este comando, el sistema comienza a funcionar de manera local en el computador.
+
+    \item \textbf{Abrir el sistema en el navegador.}
+
+    Con la aplicación en ejecución, se abre un navegador como Chrome, Edge o Firefox y se ingresa la siguiente dirección:
+
+    \begin{verbatim}
+    http://127.0.0.1:5000
+    \end{verbatim}
+
+    Esta dirección no corresponde a una página pública de Internet. Representa el servidor local del propio computador. Mientras el programa esté ejecutándose, el usuario podrá ingresar a la aplicación desde esa dirección.
+
+\end{enumerate}
+
+\newpage
+
+\section{Plan de trabajo y riesgos para la Entrega 2}
+
+Para la segunda etapa del proyecto se propone avanzar desde el diseño definido en esta entrega hacia un prototipo funcional del SIG para Bob’s Coffee. El trabajo se organizará por etapas, de manera que primero se validen los datos y procesos pendientes, luego se implemente la base de datos y finalmente se desarrollen y prueben las principales funciones del sistema.
+
+El objetivo es que el prototipo mantenga el foco en el control de inventario y reposición de insumos, evitando ampliar el alcance hacia funciones que no son necesarias para resolver el problema principal.
+
+\subsection{Plan de trabajo}
+
+El plan de trabajo se divide en distintos hitos, cada uno con responsables definidos y un resultado esperado.
+
+\begin{table}[H]
+\centering
+\caption{Plan de trabajo para la Entrega 2}
+\begin{tabularx}{\textwidth}{p{0.19\textwidth}Xp{0.20\textwidth}X}
+\toprule
+\textbf{Hito} & \textbf{Actividad principal} & \textbf{Responsable(s)} & \textbf{Resultado esperado} \\
+\midrule
+
+Validación de información &
+Confirmar el funcionamiento actual del proceso, responsables, frecuencias de compra, unidades de medida, proveedores y datos pendientes. &
+Anesti, Martín, Benjamin, Dannys y Sergio &
+Información suficiente para comenzar el desarrollo del prototipo. \\
+
+Ajuste de procesos y modelo &
+Revisar el BPMN, el modelo entidad--relación y los requerimientos a partir de la información validada. &
+Anesti y Martín &
+Diagramas y modelo de datos ajustados para la implementación. \\
+
+Implementación de la base de datos &
+Crear en SQLite las tablas, relaciones y campos definidos en el modelo entidad--relación. &
+Martín y Sergio &
+Base de datos inicial funcionando con las principales entidades del sistema. \\
+
+Desarrollo de la interfaz &
+Crear las pantallas necesarias para registrar y consultar información relacionada con inventario, compras, recepciones y conteos. &
+Benjamin y Dannys &
+Interfaz web básica conectada con las funciones principales del sistema. \\
+
+Desarrollo de la lógica &
+Implementar la actualización de stock, movimientos de inventario, alertas por stock mínimo y sugerencias de reposición. &
+Sergio, Martín y Benjamin &
+Funciones principales del SIG operativas. \\
+
+Indicadores &
+Incorporar indicadores relacionados con compras urgentes, diferencias de inventario, conteos y registro de consumos. &
+Dannys y Sergio &
+Visualización básica de información para apoyar el control del inventario. \\
+
+Pruebas del sistema &
+Probar las principales funciones utilizando datos de ejemplo y, cuando sea posible, información validada con Bob’s Coffee. &
+Todo el equipo &
+Identificación y corrección de errores antes de cerrar el prototipo. \\
+
+Documentación y cierre &
+Actualizar el repositorio, instrucciones de instalación, documentación del sistema y archivos finales. &
+Todo el equipo &
+Proyecto ordenado y reproducible desde el repositorio. \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Durante esta etapa también será necesario completar algunos datos que todavía no se encuentran totalmente definidos, como las unidades y presentaciones de compra, existencias iniciales, costos aproximados, tiempos de entrega, información de proveedores y ejemplos de compras urgentes.
+
+Estos datos permitirán que las pruebas del sistema sean más cercanas al funcionamiento real de Bob’s Coffee y que las alertas o sugerencias de reposición no dependan solamente de valores de ejemplo.
+
+\subsection{Riesgos del proyecto}
+
+Durante el desarrollo del prototipo pueden aparecer situaciones que afecten el funcionamiento del sistema o la posibilidad de completar correctamente el proyecto. Los principales riesgos identificados y las medidas para disminuirlos son los siguientes:
+
+\begin{table}[H]
+\centering
+\caption{Principales riesgos del proyecto}
+\begin{tabularx}{\textwidth}{p{0.21\textwidth}XX}
+\toprule
+\textbf{Riesgo} & \textbf{Posible problema} & \textbf{Medida propuesta} \\
+\midrule
+
+Baja adopción &
+Los usuarios podrían considerar que registrar cada movimiento requiere demasiado tiempo y dejar de utilizar el sistema de forma constante. &
+Mantener registros simples y rápidos, evitando solicitar información que no sea necesaria. \\
+
+Datos desactualizados &
+Si los consumos, mermas o conteos no se registran correctamente, el stock del sistema podría ser distinto al stock físico. &
+Definir responsables para los registros y realizar conteos físicos que permitan corregir diferencias de forma justificada. \\
+
+Alcance excesivo &
+Agregar demasiadas funciones podría aumentar la dificultad del desarrollo y alejar el proyecto del problema principal. &
+Mantener el foco en inventario, compras, recepción, movimientos, conteos y reposición. \\
+
+Información insuficiente &
+La falta de datos reales sobre compras, consumos o proveedores podría dificultar la configuración y prueba del sistema. &
+Mantener identificada la información pendiente y trabajar con datos validados antes de definir parámetros definitivos. \\
+
+Errores de ingreso &
+Un usuario podría ingresar una cantidad incorrecta o seleccionar un tipo de movimiento equivocado. &
+Validar cantidades, tipos de movimiento y campos obligatorios antes de guardar la información. \\
+
+Errores durante el desarrollo &
+Algunas funciones podrían presentar problemas al integrarse entre la interfaz, la lógica y la base de datos. &
+Realizar pruebas por etapas y corregir los errores antes de incorporar nuevas funciones. \\
+
+Datos personales &
+El sistema podría almacenar información de los usuarios responsables de realizar compras, recepciones o movimientos de inventario. &
+Guardar solamente los datos necesarios para identificar al responsable de cada operación y limitar el acceso según el rol del usuario. \\
+
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Tratamiento de datos personales}
+
+El sistema no necesita almacenar información de clientes, medios de pago u otros datos personales que no estén relacionados con el control de inventario. La información de usuarios se limitará principalmente a identificar quién realizó una operación, permitiendo mantener la trazabilidad de compras, recepciones, movimientos y conteos.
+
+Considerando la Ley N.º 21.719 sobre protección y tratamiento de datos personales, se buscará reducir al mínimo la información personal almacenada y controlar el acceso mediante roles de usuario.
+
+De esta forma, un trabajador solo debería acceder a las funciones necesarias para realizar sus tareas, mientras que las funciones de administración o revisión de información quedarían disponibles para los usuarios que correspondan.
+
+\subsection{Criterio de avance}
+
+El desarrollo se realizará de manera progresiva. Primero se implementarán las funciones necesarias para registrar y consultar el inventario. Posteriormente se incorporarán las alertas, sugerencias de reposición e indicadores.
+
+Esta forma de trabajo permite probar cada parte antes de continuar con la siguiente y reduce el riesgo de desarrollar funciones que después deban modificarse completamente.
+
+\newpage
+\appendix
+
+\section{Anexo: Diagramas de Procesos BPMN}
+
+En esta sección se presentan las capturas correspondientes a los modelos BPMN desarrollados en Bizagi para el proceso actual (AS-IS) y el proceso propuesto con intervención del SIG (TO-BE)[cite: 1, 2].
+
+\subsection{Proceso Actual (AS-IS)}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN AS-IS 1.jpeg}
+    \caption{BPMN AS-IS 1: Visión general del proceso principal de control y reposición actual.}
+    \label{fig:asis_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN AS-IS 2.jpeg}
+    \caption{BPMN AS-IS 2: Subproceso de selección de proveedor y gestión de compras urgentes.}
+    \label{fig:asis_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN AS-IS 3.jpeg}
+    \caption{BPMN AS-IS 3: Subproceso de recepción física de compras por el encargado.}
+    \label{fig:asis_3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN AS-IS 4.jpeg}
+    \caption{BPMN AS-IS 4: Subproceso de preparación en Cocina y consulta de recetario.}
+    \label{fig:asis_4}
+\end{figure}
+
+\newpage
+\subsection{Proceso Propuesto (TO-BE)}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN TO-BE 1.jpeg}
+    \caption{BPMN TO-BE 1: Visión general del proceso principal de control y reposición con SIG.}
+    \label{fig:tobe_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN TO-BE 2.jpeg}
+    \caption{BPMN TO-BE 2: Subproceso de preparación y registro de consumos/mermas en Cocina.}
+    \label{fig:tobe_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN TO-BE 3.jpeg}
+    \caption{BPMN TO-BE 3: Subproceso de emisión de orden de compra y gestión con proveedores.}
+    \label{fig:tobe_3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{BPMN/BPMN TO-BE 4.jpeg}
+    \caption{BPMN TO-BE 4: Subproceso de recepción de compras e inspección de insumos.}
+    \label{fig:tobe_4}
+\end{figure}
+
+\newpage
+\subsection{Diagrama de Arquitectura Lógica}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{Arquitectura/Arquitectura_SIG_Bobs_Coffee_FINAL_ORDENADA.jpg}
+    \caption{Arquitectura lógica, flujo de información y componentes del SIG para Bob's Coffee.}
+    \label{fig:arquitectura_anexo}
+\end{figure}
+
+\end{document}
+
+
+
