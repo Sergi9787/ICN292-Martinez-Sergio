@@ -1,0 +1,592 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=2.5cm,headheight=36pt]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{adjustbox}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue]{hyperref}
+
+\addto\captionsspanish{\renewcommand{\contentsname}{\centering\normalfont\scshape Tabla de Contenidos}}
+\captionsetup{font=small}
+
+% ---------- Encabezado y pie (mismo formato que la Entrega 1) ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=0.95cm]{img/logo_usm.png}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[L]{\small Sistemas de Información para la Gestión}
+\fancyfoot[C]{\small\textbf{\thepage}}
+\fancyfoot[R]{\small MF/BG/SM/AP}
+
+\lstdefinestyle{sql}{
+  language=SQL, basicstyle=\ttfamily\footnotesize, keywordstyle=\bfseries\color{blue!60!black},
+  commentstyle=\itshape\color{gray}, stringstyle=\color{red!50!black}, showstringspaces=false,
+  breaklines=true, frame=single, rulecolor=\color{gray!50}, xleftmargin=4pt, xrightmargin=4pt,
+  morekeywords={WITH,OVER,GREATEST,COALESCE,DATEDIFF,DATE_ADD,DATE_SUB,INTERVAL,NULLIF,ROUND,TRIGGER,SIGNAL,SQLSTATE,VIEW,REPLACE},
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Ó}{{\'O}}1
+}
+\lstset{style=sql}
+\newcommand{\tablasize}{\footnotesize}
+
+\emergencystretch=3em
+\begin{document}
+
+% ======================= PORTADA =======================
+\begin{titlepage}
+\thispagestyle{empty}
+\includegraphics[height=1.9cm]{img/logo_depto.png}
+
+\vspace*{3.2cm}
+\noindent\rule{\textwidth}{0.4pt}
+\begin{center}
+{\LARGE\scshape Entrega 2:}\\[2pt]
+{\large\scshape Implementación SIG para Pyme: Bob's Coffee}
+\end{center}
+\vspace{-6pt}\noindent\rule{\textwidth}{0.4pt}
+
+\vspace{0.8cm}
+\begin{center}
+\textbf{Martín Fuenzalida Sachs}\\ {\small Ingeniería Civil Industrial, 21.010.745-2}\\
+\textbf{Benjamín Gacitua Paredes}\\ {\small Ingeniería Civil Industrial, 21.431.497-5}\\
+\textbf{Sergio Martinez Gonzalez}\\ {\small Ingeniería Civil Industrial, 21.257.624-7}\\
+\textbf{Anesti Papasideris Barbosa}\\ {\small Ingeniería Civil Industrial, 21.295.172-1}\\[0.8cm]
+{\small \textbf{Repositorio GitHub:} \url{https://github.com/Sergi9787/ICN292-Martinez-Sergio/}}
+
+\end{center}
+
+\vfill
+\begin{center}
+{\scshape noviembre, 2026}\\[0.6cm]
+{\scshape Campus Vitacura}
+\end{center}
+\vspace*{1.5cm}
+\end{titlepage}
+
+\setcounter{page}{1}
+\tableofcontents
+\newpage
+
+% ======================= 1. RESUMEN EJECUTIVO =======================
+\section{Resumen ejecutivo}
+
+\paragraph{Problema.} Bob's Coffee (cafetería y restaurante en Argomedo 279, Antofagasta) no dispone de información confiable sobre sus insumos: las revisiones son semanales y ``al ojo'', y parte del consumo de cocina no se registra. En consecuencia, la reposición se decide por estimación y los quiebres de stock se resuelven con compras de urgencia a precio minorista, perdiendo las condiciones de los proveedores habituales (Entrega~1, sección~1.3).
+
+\paragraph{Solución.} En esta entrega el SIG propuesto en la Entrega~1 se materializa en tres piezas que cuentan la misma historia de negocio:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Proceso:} el BPMN TO-BE final, donde el SIG es un carril propio que mantiene la existencia teórica, compara contra el stock mínimo y gatilla la reposición (sección~\ref{sec:bpmn}).
+  \item \textbf{Datos:} un modelo entidad--relación en tercera forma normal (11 tablas) implementado en MySQL~8.0 con claves, restricciones \texttt{CHECK}, 8 disparadores de integridad y 2 vistas de stock. El stock no se almacena: se calcula como la suma de un libro único de movimientos trazables (sección~\ref{sec:er}).
+  \item \textbf{Automatización:} un flujo n8n que cada mañana consulta la base, detecta insumos bajo mínimo y órdenes atrasadas, y envía la alerta al administrador y a compras. Corresponde a la tarea de servicio ``Generar alerta y sugerencia de reposición'' del BPMN (sección~\ref{sec:n8n}).
+\end{itemize}
+
+\paragraph{Resultado.} Los scripts \texttt{schema.sql} y \texttt{seed.sql} se ejecutan sin errores sobre MySQL~8.0 y cargan seis semanas de operación sintética (1 de octubre al 14 de noviembre de 2026): 76 órdenes de compra, 79 recepciones, 6 conteos físicos y 495 movimientos de inventario. Sobre esa base, ocho consultas de negocio entregan los indicadores comprometidos en la Entrega~1. Al corte del 14 de noviembre:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item La \textbf{pechuga de pollo} está bajo su mínimo (3.056\,g frente a 4.000\,g), pero el sistema \emph{no} sugiere un pedido adicional porque hay 16.743\,g en tránsito. Esa orden está atrasada un día, de modo que la acción correcta es llamar al proveedor y no duplicar la compra.
+  \item 7 de 75 órdenes no canceladas fueron \textbf{compras de urgencia}, con un sobrecosto de \$42.068 frente al precio habitual. Cuatro de ellas son de pollo en noviembre y coinciden con los atrasos de la avícola (atraso medio de 0,69 días).
+  \item Los 48 conteos físicos registran existencias \textbf{menores} que las teóricas (100\,\%), lo que es la huella del consumo no registrado descrito en la Entrega~1. El error medio llega a 20,3\,\% en huevos y a 13,2\,\% en pollo.
+\end{itemize}
+Los datos son sintéticos y fueron construidos para ser coherentes con el caso (sección~\ref{sec:seed}); por tanto, demuestran que el sistema \emph{mide} el problema, no que lo haya resuelto en el local. Validar esos indicadores con datos reales de Bob's Coffee es el siguiente paso (sección~\ref{sec:lecciones}).
+
+\newpage
+% ======================= 2. TRAZABILIDAD =======================
+\section{Trazabilidad Entrega 1 $\rightarrow$ Entrega 2}
+\label{sec:traza}
+
+Se mantienen el caso PYME, el problema de negocio, el objetivo del SIG, los actores y el alcance IN/OUT definidos en la Entrega~1. Lo que cambia es la forma de implementación, ajustada a lo que exige esta entrega (SQL ejecutable y automatización) y a lo aprendido al normalizar el modelo. El Cuadro~\ref{tab:traza} resume las decisiones.
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{5.2cm}}
+\caption{Qué se mantuvo y qué cambió desde la Entrega 1}\label{tab:traza}\\
+\toprule
+\textbf{Elemento} & \textbf{Entrega 1} & \textbf{Entrega 2} & \textbf{Por qué} \\ \midrule \endfirsthead
+\toprule
+\textbf{Elemento} & \textbf{Entrega 1} & \textbf{Entrega 2} & \textbf{Por qué} \\ \midrule \endhead
+Caso, problema y objetivo & Bob's Coffee; reposición reactiva por información desactualizada & \textbf{Se mantiene} & El problema sigue siendo el mismo; la E2 lo hace medible. \\
+Motor de base de datos & SQLite (tentativo) & MySQL 8.0 & Se requieren restricciones \texttt{CHECK} efectivas, disparadores que validen contra otras tablas, columnas generadas e índices únicos condicionados. Además, n8n tiene un nodo nativo para MySQL. \\
+Interfaz web (Flask + Chart.js) & Pantallas de registro y panel de KPI & No forma parte de esta entrega & La E2 exige SQL ejecutable y automatización. La interacción se demuestra con los scripts y el flujo n8n; la interfaz queda como trabajo futuro (sección~\ref{sec:lecciones}). \\
+Compras & Entidades \emph{Compra} y \emph{DetalleCompra} & \texttt{orden\_compra} + \texttt{detalle\_orden} con estado y marca \texttt{es\_urgente} & La compra de urgencia pasa a ser un dato y no una conversación: permite el KPI de urgencias y su sobrecosto. \\
+Recepción & Entidad \emph{Recepción} & \texttt{recepcion} + \texttt{detalle\_recepcion} (cantidad recibida y aceptada por línea) & El BPMN TO-BE 4 distingue entregas parciales y rechazos; una recepción por orden no lo permitía. Una orden admite varias recepciones. \\
+Proveedor--insumo & Proveedor con lead time & Tabla \texttt{insumo\_proveedor} (N:M) con \texttt{plazo\_entrega\_dias} & El plazo depende del par insumo--proveedor, no del proveedor solo (2FN). \\
+Existencias & ``Actualizar existencias'' & Vista \texttt{v\_stock\_actual} sobre un libro único de movimientos & Guardar el stock como campo genera anomalías de actualización. El saldo siempre es la suma de movimientos trazables. \\
+Conteos y ajustes & Conteo y ajuste automático & \texttt{conteo\_fisico} + \texttt{detalle\_conteo} con \texttt{cantidad\_teorica\_antes\_base}; el ajuste debe igualar la diferencia & Deja evidencia de qué decía el sistema al momento del conteo y respalda cada ajuste (RF05). \\
+Usuarios y roles & RBAC con tres roles & \texttt{usuario.rol} $\in$ \{ADMINISTRADOR, COMPRAS, COCINA\}; todo movimiento exige usuario & Trazabilidad por responsable (RF09) con datos personales mínimos (Ley 21.719). \\
+RF07 Alertas / RF08 Sugerencia & Funciones del sistema & Consultas C1, C2 y C8 + flujo n8n diario & La alerta deja de depender de que alguien revise; corre sola a las 07:00. \\
+RF10 Panel de KPI & Panel con Chart.js & Consultas C3--C6 (urgencias, exactitud, merma, proveedores) & Los indicadores se calculan sobre la misma base que opera el proceso. \\
+KPI ``tiempo dedicado al conteo'' & Propuesto & Se descarta & El modelo registra cuándo se contó, no cuánto duró; medirlo exigiría un campo adicional sin valor para la decisión de compra. \\
+BPMN TO-BE & 4 diagramas & Mismos 4 diagramas con ajustes de coherencia con los datos (Cuadro~\ref{tab:bpmnajustes}) & El BPMN y el ER deben contar la misma historia. \\
+\bottomrule
+\end{longtable}
+}
+
+\subsection*{Cobertura de requisitos funcionales}
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{7.4cm}>{\raggedright\arraybackslash}p{3.6cm}}
+\caption{Requisitos de la Entrega 1 y dónde quedan implementados}\label{tab:rf}\\
+\toprule \textbf{Requisito} & \textbf{Implementación en E2} & \textbf{Estado} \\ \midrule \endfirsthead
+\toprule \textbf{Requisito} & \textbf{Implementación en E2} & \textbf{Estado} \\ \midrule \endhead
+RF01 Insumos & Tabla \texttt{insumo} (unidad base, categoría, stock mínimo $\geq 0$) & Implementado \\
+RF02 Proveedores & \texttt{proveedor} + \texttt{insumo\_proveedor} con plazo de entrega & Implementado \\
+RF03 Recepción & \texttt{recepcion}/\texttt{detalle\_recepcion}; la entrada solo existe si hay línea recibida y aceptada & Implementado \\
+RF04 Salidas & Movimientos \texttt{CONSUMO} y \texttt{MERMA} (negativos, con motivo) & Implementado \\
+RF05 Conteos y ajustes & \texttt{detalle\_conteo} + movimiento \texttt{AJUSTE} validado por disparador & Implementado \\
+RF06 Consulta e historial & Vista \texttt{v\_stock\_actual}; kardex (C7) & Implementado \\
+RF07 Alertas & Vista \texttt{v\_stock\_bajo}, C1, flujo n8n & Implementado \\
+RF08 Sugerencia & C2 (consumo medio, plazo, tránsito) & Implementado como consulta \\
+RF09 Usuarios & \texttt{usuario} con rol; FK obligatoria en movimientos y conteos & Parcial: recepciones y órdenes no guardan usuario (sec.~\ref{sec:lecciones}) \\
+RF10 Indicadores & C3--C6 & Consultas, sin panel gráfico \\
+\bottomrule
+\end{longtable}
+}
+
+\newpage
+% ======================= 3. BPMN Y AUTOMATIZACIÓN =======================
+\section{BPMN final y automatización}
+\label{sec:bpmn}
+
+\subsection{BPMN TO-BE final}
+El proceso TO-BE conserva la estructura de la Entrega~1: un proceso principal de control y reposición y tres subprocesos (preparación en cocina, emisión de la orden de compra y recepción). Las Figuras~\ref{fig:tobe1} a \ref{fig:tobe4} muestran los diagramas modelados en Bizagi. Al contrastarlos con el modelo de datos se hicieron los ajustes del Cuadro~\ref{tab:bpmnajustes}, de modo que cada tarea que ``registra en el SIG'' tiene una tabla que la respalda y cada tabla nace de una tarea del proceso.
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}p{5.4cm}}
+\caption{Ajustes al BPMN TO-BE respecto de la Entrega 1}\label{tab:bpmnajustes}\\
+\toprule \textbf{Tarea en E1} & \textbf{Versión final} & \textbf{Motivo / respaldo en datos} \\ \midrule \endfirsthead
+\toprule \textbf{Tarea en E1} & \textbf{Versión final} & \textbf{Motivo / respaldo en datos} \\ \midrule \endhead
+``Calcular insumos requeridos según receta'' (servicio, TO-BE 2) & Se elimina del carril SIG; cocina consulta el recetario en Fudo y registra el \textbf{retiro agregado} de bodega & El alcance OUT excluye el recetario dinámico y el modelo no tiene tabla de recetas. Se registra como movimiento \texttt{CONSUMO}. \\
+``Generar alerta y sugerencia de reposición'' (servicio) & Tarea de servicio automatizada por \textbf{n8n} (07:00, lunes a sábado) & Flujo de la sección~\ref{sec:n8n}; lee \texttt{v\_stock\_bajo} y órdenes abiertas. \\
+``Seleccionar comercio cercano y registrar excepción'' & Se registra como orden con \texttt{es\_urgente = 1} al proveedor ``Comercio minorista cercano'' & Permite medir urgencias y sobrecosto (C3). \\
+``Registrar compra no concretada'' & Orden en estado \texttt{CANCELADA} & Estado controlado por \texttt{CHECK}. \\
+``Determinar y registrar cantidad aceptada'' / ``Registrar rechazo y reabrir necesidad'' & \texttt{detalle\_recepcion} con cantidad recibida y aceptada ($0 \leq$ aceptada $\leq$ recibida) & Solo lo aceptado genera \texttt{ENTRADA}; un rechazo total no mueve stock y la necesidad sigue visible en C1/C2. \\
+``Registrar conteo físico en el SIG'' & \texttt{conteo\_fisico} + \texttt{detalle\_conteo} y su \texttt{AJUSTE} & El disparador exige que el ajuste sea igual a física $-$ teórica. \\
+``Efectuar pago con respaldo digital'' & Se mantiene como tarea humana fuera del SIG & Pagos y facturación están fuera del alcance (E1, sección 2.2). \\
+\bottomrule
+\end{longtable}
+}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{img/tobe1.png}
+\caption{BPMN TO-BE 1: proceso principal de control y reposición con SIG.}\label{fig:tobe1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{img/tobe2.png}
+\caption{BPMN TO-BE 2: preparación y registro de consumos y mermas en cocina.}\label{fig:tobe2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{img/tobe3.png}
+\caption{BPMN TO-BE 3: emisión de la orden de compra y gestión con proveedores.}\label{fig:tobe3}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{img/tobe4.png}
+\caption{BPMN TO-BE 4: recepción de compras e inspección de insumos.}\label{fig:tobe4}
+\end{figure}
+
+\subsection{Correspondencia proceso--datos}
+El Cuadro~\ref{tab:bpmnsql} muestra que el BPMN y el modelo de datos cuentan la misma historia: cada evento que cambia la existencia de un insumo deja exactamente un movimiento, con su origen y su responsable.
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{7.6cm}}
+\caption{Tareas del BPMN TO-BE y su registro en la base de datos}\label{tab:bpmnsql}\\
+\toprule \textbf{Tarea BPMN (carril)} & \textbf{Movimiento} & \textbf{Tablas y regla que lo respalda} \\ \midrule \endfirsthead
+\toprule \textbf{Tarea BPMN (carril)} & \textbf{Movimiento} & \textbf{Tablas y regla que lo respalda} \\ \midrule \endhead
+Carga inicial (Administrador) & \texttt{SALDO\_INICIAL} & Uno por insumo: índice único sobre la columna generada \texttt{id\_insumo\_saldo\_inicial}. \\
+Emitir orden de compra (Compras) & --- & \texttt{orden\_compra} + \texttt{detalle\_orden}; precio histórico por línea. \\
+Recibir y aceptar insumos (Compras) & \texttt{ENTRADA} & \texttt{recepcion} $\rightarrow$ \texttt{detalle\_recepcion}. El disparador exige que la línea pertenezca a la orden recibida y que la entrada sea igual a la cantidad aceptada del mismo insumo. \\
+Retirar insumos de bodega (Cocina) & \texttt{CONSUMO} & Variación negativa, sin origen externo, con usuario y fecha. \\
+Registrar merma o devolución (Cocina) & \texttt{MERMA} & Variación negativa con \texttt{motivo} (vencimiento, daño, error de preparación). \\
+Registrar conteo físico (Compras/Cocina) & \texttt{AJUSTE} & \texttt{conteo\_fisico} $\rightarrow$ \texttt{detalle\_conteo}; ajuste = física $-$ teórica antes. \\
+Actualizar existencias / Comparar con mínimo (SIG) & --- & Vistas \texttt{v\_stock\_actual} y \texttt{v\_stock\_bajo}. \\
+Generar alerta y sugerencia (SIG) & --- & Flujo n8n + consultas C1, C2 y C8. \\
+\bottomrule
+\end{longtable}
+}
+
+\subsection{Automatización con n8n}
+\label{sec:n8n}
+Se automatiza la tarea de servicio \textbf{``Generar alerta y sugerencia de reposición''} del BPMN TO-BE~1 (Figura~\ref{fig:tobe1}). En el AS-IS la necesidad de reponer solo se detectaba cuando alguien veía el faltante; con el flujo, la base de datos avisa antes de la jornada. El flujo está exportado en \texttt{n8n/alerta\_stock\_minimo.json} y se importa en n8n con \emph{Import from file}. La Figura~\ref{fig:n8n} lo resume y el Cuadro~\ref{tab:n8n} lo documenta paso a paso.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.55cm and 0.45cm,
+  box/.style={draw, rounded corners=3pt, fill=blue!6, align=center, font=\scriptsize, minimum height=1.05cm, text width=2.05cm},
+  dec/.style={draw, diamond, aspect=1.6, fill=yellow!20, align=center, font=\scriptsize, inner sep=1pt},
+  arr/.style={-{Stealth[length=2mm]}}]
+\node[box, fill=green!10] (t) {\textbf{1. Schedule}\\ 07:00 lun--sáb};
+\node[box, right=of t] (a) {\textbf{2. MySQL}\\ Stock bajo mínimo};
+\node[box, right=of a] (b) {\textbf{3. MySQL}\\ OC atrasadas};
+\node[box, right=of b] (c) {\textbf{4. Code}\\ Armar mensaje};
+\node[dec, right=of c] (d) {¿Hay\\alertas?};
+\node[box, above right=0.15cm and 0.5cm of d, fill=orange!12] (e) {\textbf{5. Email}\\ Admin + Compras};
+\node[box, below right=0.15cm and 0.5cm of d, fill=gray!10] (f) {\textbf{6. NoOp}\\ Sin reposición};
+\draw[arr] (t)--(a); \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\draw[arr] (d) |- node[pos=0.75, above, font=\scriptsize]{sí} (e);
+\draw[arr] (d) |- node[pos=0.75, below, font=\scriptsize]{no} (f);
+\end{tikzpicture}
+\caption{Flujo n8n ``Bob's Coffee -- Alerta diaria de stock mínimo''.}\label{fig:n8n}
+\end{figure}
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.9cm}>{\raggedright\arraybackslash}p{6.6cm}>{\raggedright\arraybackslash}p{5.1cm}}
+\caption{Nodos del flujo n8n y su trazabilidad}\label{tab:n8n}\\
+\toprule \textbf{Nodo} & \textbf{Qué hace} & \textbf{Elemento del BPMN / datos} \\ \midrule \endfirsthead
+\toprule \textbf{Nodo} & \textbf{Qué hace} & \textbf{Elemento del BPMN / datos} \\ \midrule \endhead
+1. Schedule Trigger & Cron \texttt{0 7 * * 1-6}, zona \texttt{America/Santiago}, antes de abrir el local. & Evento de inicio temporizado ``Ciclo diario de control''. \\
+2. MySQL: Stock bajo mínimo & Lee \texttt{v\_stock\_bajo} y suma lo pendiente de órdenes \texttt{EMITIDA}/\texttt{PARCIAL} por insumo. & ``Comparar existencias con stock mínimo''; RF07. \\
+3. MySQL: OC atrasadas & Órdenes abiertas cuya fecha de emisión + plazo del par insumo--proveedor ya pasó. & Detecta riesgo de quiebre aunque haya stock en tránsito. \\
+4. Code (JavaScript) & Une ambos resultados en un mensaje. Si el insumo tiene stock en tránsito indica ``seguir la OC, no duplicar''; si no, ``emitir OC según sugerencia''. & ``Generar alerta y sugerencia de reposición''; RF08. \\
+5. IF + Email & Si hay líneas, envía el correo al administrador y a compras (SMTP); si no, termina. & Mensaje hacia ``Validar sugerencia y ajustar cantidades'' (carril Compras). \\
+\bottomrule
+\end{longtable}
+}
+
+\paragraph{Salida esperada con los datos de prueba.} Las dos consultas del flujo se ejecutaron directamente en MySQL con fecha de corte 14-11-2026, y la lógica del nodo \emph{Code} se probó con Node.js usando esas filas. El mensaje resultante es:
+\begin{lstlisting}[language={},basicstyle=\ttfamily\scriptsize]
+Revisión diaria del SIG - 2026-11-14
+- Pechuga de pollo: 3056 g (mínimo 4000) -> hay 16743 g en tránsito: seguir la OC, no duplicar
+- OC 68 (Avícola local, Pechuga de pollo) atrasada 1 día(s) -> contactar proveedor
+- OC 70 (Distribuidor de lácteos, Queso laminado) atrasada 1 día(s) -> contactar proveedor
+\end{lstlisting}
+El valor de la automatización está en la segunda línea. Un sistema que solo comparara stock contra mínimo habría sugerido comprar más pollo; al cruzar con las órdenes abiertas, el flujo distingue entre ``falta pedir'' y ``falta que llegue'', que son decisiones distintas. Las credenciales MySQL y SMTP del JSON son marcadores (\texttt{REEMPLAZAR}) y deben configurarse en la instancia de n8n; se recomienda un usuario MySQL de solo lectura.
+
+
+\subsubsection*{Evidencia de ejecución de la automatización}
+
+Para verificar el funcionamiento de la automatización propuesta,
+se ejecutó el flujo de trabajo en n8n Cloud, utilizando la
+base de datos MySQL de Bob's Coffee y la configuración de
+envío de correos electrónicos mediante SMTP.
+
+La Figura~\ref{fig:n8n_ejecutado} muestra la ejecución
+exitosa del flujo, incluyendo las consultas de stock bajo
+mínimo, la identificación de órdenes de compra atrasadas,
+la generación del mensaje y el envío de la alerta.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/n8n_ejecutado.jpeg}
+    \caption{Ejecución exitosa del flujo de automatización
+    en n8n Cloud.}
+    \label{fig:n8n_ejecutado}
+\end{figure}
+
+Como resultado de la ejecución, el sistema generó y envió
+automáticamente un correo electrónico con información
+sobre los insumos bajo el stock mínimo y las órdenes de
+compra atrasadas.
+
+La Figura~\ref{fig:correo_alerta} presenta el correo
+recibido, donde se identifica que la pechuga de pollo
+presenta un stock de 3.056 g frente a un mínimo de
+4.000 g. Sin embargo, existen 16.743 g en tránsito,
+por lo que se recomienda revisar la orden pendiente
+antes de efectuar una nueva compra.
+
+Adicionalmente, se notifican los atrasos de las órdenes
+de compra 68 y 70, ambas con un día de retraso,
+recomendando contactar a los proveedores correspondientes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{img/correo_alerta.jpeg}
+    \caption{Correo electrónico generado automáticamente
+    por n8n con las alertas de inventario y órdenes
+    de compra atrasadas.}
+    \label{fig:correo_alerta}
+\end{figure}
+
+Estas evidencias permiten comprobar la integración
+entre la base de datos MySQL, el procesamiento de
+información mediante n8n y el sistema de notificaciones
+por correo electrónico, materializando la tarea de
+servicio definida en el BPMN TO-BE.
+
+La ejecución corresponde a una demostración funcional
+con datos sintéticos y no a un despliegue productivo.
+
+
+\newpage
+% ======================= 4. MODELO DE DATOS =======================
+\section{Modelo entidad--relación en 3FN y diccionario de datos}
+\label{sec:er}
+
+\subsection{Diagrama entidad--relación}
+La Figura~\ref{fig:er} presenta el modelo final. Tiene 11 entidades organizadas en tres bloques: \emph{maestros} (insumo, proveedor, usuario e insumo\_proveedor), \emph{documentos} (orden de compra, recepción y conteo físico, cada uno con sus líneas) y el \emph{libro de movimientos}, que es la única fuente del stock.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{img/er.jpg}
+\caption{Modelo entidad--relación final del SIG de Bob's Coffee.}\label{fig:er}
+\end{figure}
+
+\subsection{Justificación de la tercera forma normal}
+\begin{description}[leftmargin=0.5cm,style=nextline]
+\item[1FN -- atributos atómicos, sin grupos repetidos.] Las líneas de una orden, de una recepción o de un conteo no se guardan como listas dentro del documento; cada una es una fila de \texttt{detalle\_orden}, \texttt{detalle\_recepcion} o \texttt{detalle\_conteo}. Cada atributo guarda un solo valor (por ejemplo, la cantidad siempre en unidad base y no ``2 cajas de 30'').
+\item[2FN -- dependencia total de la clave.] La única clave primaria compuesta es la de \texttt{insumo\_proveedor} (\texttt{id\_insumo}, \texttt{id\_proveedor}). Su único atributo, \texttt{plazo\_entrega\_dias}, depende del par completo: la avícola puede tardar dos días en pollo y uno en huevos. Por eso el plazo no vive en \texttt{proveedor}. Las demás tablas usan clave sustituta simple, y las claves naturales se protegen con restricciones \texttt{UNIQUE} (\texttt{(id\_recepcion, id\_detalle)} y \texttt{(id\_conteo, id\_insumo)}).
+\item[3FN -- sin dependencias transitivas.] Ningún atributo no clave depende de otro atributo no clave. El proveedor de una recepción no se repite en \texttt{recepcion}: se obtiene por la orden. El insumo de una línea recibida no se repite en \texttt{detalle\_recepcion}: se obtiene por \texttt{detalle\_orden}. El nombre y la unidad del insumo viven solo en \texttt{insumo}.
+\item[Stock derivado, no almacenado.] La existencia es $\sum$ \texttt{variacion\_cantidad\_base} por insumo (vista \texttt{v\_stock\_actual}). Guardar un campo \texttt{stock} en \texttt{insumo} crearía una dependencia del historial que habría que mantener a mano, y ese es justamente el descuadre que origina el problema de Bob's Coffee.
+\end{description}
+
+\paragraph{Anomalías evitadas.}
+\begin{itemize}[leftmargin=*,itemsep=1pt]
+  \item \emph{Inserción:} se puede registrar un proveedor o un insumo antes de su primera compra.
+  \item \emph{Actualización:} cambiar el nombre de un insumo o el plazo de un proveedor se hace en una sola fila; el stock no se actualiza porque se calcula.
+  \item \emph{Eliminación:} las claves foráneas sin \texttt{ON DELETE CASCADE} impiden borrar un insumo, una orden o un usuario con historial, de modo que no se pierde la trazabilidad.
+\end{itemize}
+
+\paragraph{Redundancias controladas (justificadas).} Se aceptan tres excepciones conscientes, cada una con su control:
+\begin{enumerate}[leftmargin=*,itemsep=1pt]
+  \item \texttt{movimiento\_inventario.id\_insumo} es deducible del origen en las entradas y los ajustes. Se mantiene porque los consumos y las mermas no tienen documento de origen, y un libro uniforme simplifica todas las consultas. Los disparadores \texttt{validar\_movimiento\_*} impiden que el insumo o la cantidad difieran del origen.
+  \item \texttt{detalle\_conteo.cantidad\_teorica\_antes\_base} podría recalcularse con los movimientos anteriores al conteo. Se guarda como \emph{evidencia} de lo que mostraba el sistema al contar; el disparador obliga a que el ajuste sea exactamente física $-$ teórica, y \texttt{conservar\_origen\_ajuste} bloquea su edición una vez usado.
+  \item \texttt{orden\_compra.estado} es parcialmente deducible de las recepciones (\texttt{EMITIDA}, \texttt{PARCIAL}, \texttt{RECIBIDA}); \texttt{CANCELADA} no lo es. Hoy el estado se actualiza por aplicación y no por disparador. Se reconoce como limitación (sección~\ref{sec:lecciones}).
+\end{enumerate}
+
+\subsection{Diccionario de datos}
+Convenciones: \textbf{PK} clave primaria, \textbf{FK} clave foránea, \textbf{UQ} única. Todas las cantidades se expresan en la unidad base del insumo como \texttt{DECIMAL(18,6)}, de modo que la conversión desde unidades de compra (cajas, bandejas, kilos) ocurre al ingresar el dato (RNF03).
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{1.6cm}>{\raggedright\arraybackslash}p{6.2cm}}
+\caption{Diccionario de datos del modelo}\label{tab:dic}\\
+\toprule \textbf{Atributo} & \textbf{Tipo} & \textbf{Clave} & \textbf{Descripción / regla} \\ \midrule \endfirsthead
+\toprule \textbf{Atributo} & \textbf{Tipo} & \textbf{Clave} & \textbf{Descripción / regla} \\ \midrule \endhead
+\multicolumn{4}{l}{\textbf{insumo} --- catálogo de insumos controlados} \\
+id\_insumo & INT AI & PK & Identificador. \\
+nombre & VARCHAR(150) & & No vacío (\texttt{CHECK}). \\
+categoria & VARCHAR(80) & & Cafetería, Lácteos, Proteínas, etc. \\
+unidad\_base & VARCHAR(30) & & g, ml o unidad. \\
+stock\_minimo & DECIMAL(18,6) & & Umbral de alerta, $\geq 0$. \\ \midrule
+\multicolumn{4}{l}{\textbf{proveedor}} \\
+id\_proveedor & INT AI & PK & Identificador. \\
+nombre & VARCHAR(150) & & No vacío. \\ \midrule
+\multicolumn{4}{l}{\textbf{usuario} --- responsable de cada registro} \\
+id\_usuario & INT AI & PK & Identificador. \\
+nombre & VARCHAR(150) & & No vacío; único dato personal almacenado. \\
+rol & VARCHAR(30) & & ADMINISTRADOR, COMPRAS o COCINA (\texttt{CHECK}). \\ \midrule
+\multicolumn{4}{l}{\textbf{insumo\_proveedor} --- quién abastece qué (N:M)} \\
+id\_insumo & INT & PK, FK & $\rightarrow$ insumo. \\
+id\_proveedor & INT & PK, FK & $\rightarrow$ proveedor. \\
+plazo\_entrega\_dias & INT & & Lead time del par, $\geq 0$ (0 = compra inmediata). \\ \midrule
+\multicolumn{4}{l}{\textbf{orden\_compra}} \\
+id\_orden & INT AI & PK & Identificador. \\
+id\_proveedor & INT & FK & $\rightarrow$ proveedor. \\
+fecha\_emision & DATE & & Fecha de emisión. \\
+estado & VARCHAR(20) & & EMITIDA (defecto), PARCIAL, RECIBIDA o CANCELADA. \\
+es\_urgente & TINYINT & & 1 = compra de urgencia (0/1). \\ \midrule
+\multicolumn{4}{l}{\textbf{detalle\_orden} --- líneas de la orden} \\
+id\_detalle & INT AI & PK & Identificador. \\
+id\_orden & INT & FK & $\rightarrow$ orden\_compra. \\
+id\_insumo & INT & FK & $\rightarrow$ insumo. \\
+cantidad\_solicitada\_base & DECIMAL(18,6) & & $> 0$. \\
+precio\_unitario\_base & DECIMAL(18,6) & & Precio por unidad base al emitir, $\geq 0$ (histórico). \\ \midrule
+\multicolumn{4}{l}{\textbf{recepcion} --- llegada física de (parte de) una orden} \\
+id\_recepcion & INT AI & PK & Identificador. \\
+id\_orden & INT & FK & $\rightarrow$ orden\_compra; no cambia si ya tiene líneas (disparador). \\
+fecha\_hora\_recepcion & DATETIME & & Momento de la recepción. \\ \midrule
+\multicolumn{4}{l}{\textbf{detalle\_recepcion}} \\
+id\_detalle\_recepcion & INT AI & PK & Identificador. \\
+id\_recepcion & INT & FK, UQ* & $\rightarrow$ recepcion. \\
+id\_detalle & INT & FK, UQ* & $\rightarrow$ detalle\_orden; debe pertenecer a la orden de la recepción (disparador). \\
+cantidad\_recibida\_base & DECIMAL(18,6) & & $> 0$. \\
+cantidad\_aceptada\_base & DECIMAL(18,6) & & $0 \leq$ aceptada $\leq$ recibida. \\ \midrule
+\multicolumn{4}{l}{\textbf{conteo\_fisico}} \\
+id\_conteo & INT AI & PK & Identificador. \\
+id\_usuario & INT & FK & $\rightarrow$ usuario que cuenta. \\
+fecha\_hora & DATETIME & & Momento del conteo. \\ \midrule
+\multicolumn{4}{l}{\textbf{detalle\_conteo}} \\
+id\_detalle\_conteo & INT AI & PK & Identificador. \\
+id\_conteo & INT & FK, UQ* & $\rightarrow$ conteo\_fisico. \\
+id\_insumo & INT & FK, UQ* & $\rightarrow$ insumo; un insumo una vez por conteo. \\
+cantidad\_fisica\_base & DECIMAL(18,6) & & Lo contado, $\geq 0$. \\
+cantidad\_teorica\_antes\_base & DECIMAL(18,6) & & Lo que indicaba el sistema al contar (evidencia). \\ \midrule
+\multicolumn{4}{l}{\textbf{movimiento\_inventario} --- libro único de existencias} \\
+id\_movimiento & INT AI & PK & Identificador. \\
+id\_insumo & INT & FK & $\rightarrow$ insumo; índice (id\_insumo, fecha\_hora). \\
+id\_usuario & INT & FK & $\rightarrow$ usuario responsable (obligatorio). \\
+id\_detalle\_recepcion & INT NULL & FK, UQ & Origen de una ENTRADA; una línea respalda a lo más una entrada. \\
+id\_detalle\_conteo & INT NULL & FK, UQ & Origen de un AJUSTE; una línea respalda a lo más un ajuste. \\
+fecha\_hora & DATETIME & & Momento del movimiento. \\
+tipo\_movimiento & VARCHAR(20) & & SALDO\_INICIAL, ENTRADA, CONSUMO, MERMA o AJUSTE. \\
+variacion\_cantidad\_base & DECIMAL(18,6) & & Signo según tipo: $+$ entrada/saldo; $-$ consumo/merma; $\neq 0$ ajuste. \\
+motivo & VARCHAR(500) NULL & & Causa (vencimiento, daño, etc.). \\
+id\_insumo\_saldo\_inicial & INT (virtual) & UQ & Columna generada: \texttt{id\_insumo} solo si es SALDO\_INICIAL; garantiza un saldo inicial por insumo. \\
+\bottomrule
+\multicolumn{4}{l}{\footnotesize UQ*: unicidad compuesta del par marcado.}
+\end{longtable}
+}
+
+\subsection{Reglas de negocio implementadas en la base}
+La restricción \texttt{ck\_mi\_tipo\_y\_origen} amarra cada tipo de movimiento a su signo y a su documento de origen: una \texttt{ENTRADA} es positiva y debe venir de una línea de recepción; un \texttt{AJUSTE} es distinto de cero y debe venir de una línea de conteo; \texttt{CONSUMO} y \texttt{MERMA} son negativos y no tienen documento; el \texttt{SALDO\_INICIAL} es positivo. Lo que un \texttt{CHECK} no puede verificar porque requiere leer otra tabla lo controlan ocho disparadores (Cuadro~\ref{tab:triggers}).
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{6.9cm}}
+\caption{Disparadores de integridad}\label{tab:triggers}\\
+\toprule \textbf{Disparador} & \textbf{Tabla / evento} & \textbf{Regla que impone} \\ \midrule \endfirsthead
+\toprule \textbf{Disparador} & \textbf{Tabla / evento} & \textbf{Regla que impone} \\ \midrule \endhead
+validar\_recepcion\_insert / \_update & detalle\_recepcion, antes de INSERT/UPDATE & La línea recibida pertenece a la orden de esa recepción. \\
+validar\_movimiento\_insert / \_update & movimiento\_inventario & La ENTRADA corresponde al mismo insumo y a la cantidad aceptada; el AJUSTE corresponde al mismo insumo y a física $-$ teórica. \\
+conservar\_orden\_de\_recepcion & recepcion, UPDATE & No se cambia la orden de una recepción con líneas. \\
+conservar\_linea\_orden\_recibida & detalle\_orden, UPDATE & No se cambia la orden ni el insumo de una línea ya recibida. \\
+conservar\_origen\_entrada & detalle\_recepcion, UPDATE & No se edita una línea que ya respalda una entrada. \\
+conservar\_origen\_ajuste & detalle\_conteo, UPDATE & No se edita una línea que ya respalda un ajuste. \\
+\bottomrule
+\end{longtable}
+}
+
+\newpage
+% ======================= 5. SQL =======================
+\section{Diseño SQL y consultas de negocio}
+\label{sec:sql}
+
+\subsection{\texttt{schema.sql}}
+Crea la base \texttt{bobs\_coffee\_final} (\texttt{utf8mb4}, InnoDB), las 11 tablas con sus claves y restricciones, los 8 disparadores y las vistas \texttt{v\_stock\_actual} y \texttt{v\_stock\_bajo}. Al final imprime un control: \emph{Tablas 11, Vistas 2, Disparadores 8}. Se ejecutó sin errores en MySQL~8.0.46. Requiere MySQL $\geq$~8.0.29, porque usa \texttt{CREATE TRIGGER IF NOT EXISTS}. El núcleo del modelo es la vista de stock:
+\begin{lstlisting}
+CREATE OR REPLACE VIEW v_stock_actual AS
+SELECT i.id_insumo, i.nombre, i.unidad_base, i.stock_minimo,
+       COALESCE(SUM(m.variacion_cantidad_base), 0) AS stock_actual
+FROM insumo AS i
+LEFT JOIN movimiento_inventario AS m ON m.id_insumo = i.id_insumo
+GROUP BY i.id_insumo, i.nombre, i.unidad_base, i.stock_minimo;
+\end{lstlisting}
+
+\subsection{\texttt{seed.sql}: datos sintéticos coherentes}
+\label{sec:seed}
+No se dispone aún del historial real de Bob's Coffee, por lo que \texttt{seed.sql} contiene datos \textbf{sintéticos}. Se generan con \texttt{gen\_seed.py} (semilla fija 82, reproducible) simulando la operación día a día entre el 1 de octubre y el 14 de noviembre de 2026 (lunes a sábado). La simulación respeta el caso:
+\begin{itemize}[leftmargin=*,itemsep=1pt]
+  \item 8 insumos: los cuatro prioritarios de la Entrega~1 (café, huevos, pollo y pan) y cuatro de uso diario (leche, palta, queso y azúcar). Hay 7 proveedores, entre ellos Marley's Coffee y un ``comercio minorista cercano'' para urgencias, y 4 usuarios (el administrador y tres usuarios de rol anonimizados).
+  \item Consumo diario con variación de $\pm 20$\,\% (sábados $+25$\,\%). Entre 0 y 8\,\% del consumo real \emph{no se registra}, que es el problema de la Entrega~1. Hay mermas aleatorias en perecibles.
+  \item Revisión diaria del SIG que emite órdenes al proveedor habitual. Hay atrasos (20\,\% de las órdenes), entregas parciales que se completan en una segunda recepción y productos rechazados en la inspección.
+  \item Si el stock \emph{físico} no alcanza, se registra una compra urgente al comercio minorista a un 35\,\% sobre el precio base. Los lunes hay conteo físico de todos los insumos con su ajuste.
+\end{itemize}
+Todos los registros pasan las restricciones y los disparadores del esquema: si algún dato fuera incoherente (por ejemplo, una entrada distinta de la cantidad aceptada), la carga fallaría.
+
+\begin{table}[H]
+\centering\tablasize
+\caption{Volumen cargado por \texttt{seed.sql}}\label{tab:vol}
+\begin{tabular}{lr@{\hspace{1.5cm}}lr}
+\toprule
+\textbf{Tabla} & \textbf{Filas} & \textbf{Tabla} & \textbf{Filas} \\ \midrule
+insumo & 8 & detalle\_recepcion & 82 \\
+proveedor & 7 & conteo\_fisico & 6 \\
+usuario & 4 & detalle\_conteo & 48 \\
+orden\_compra & 76 & movimiento\_inventario & 495 \\
+detalle\_orden & 79 & \quad SALDO\_INICIAL / ENTRADA & 8 / 82 \\
+recepcion & 79 & \quad CONSUMO / MERMA / AJUSTE & 312 / 45 / 48 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Consultas de negocio e interpretación}
+Las ocho consultas están en \texttt{sql/consultas.sql} y usan una fecha de corte fija (\texttt{@fecha\_corte = '2026-11-14'}) para que cualquier persona obtenga exactamente los mismos resultados. Las tablas siguientes son la salida de MySQL sin edición.
+
+\subsubsection*{C1. Alerta de stock mínimo (RF06, RF07)}
+\begin{table}[H]\centering\tablasize\adjustbox{max width=\textwidth}{\input{tablas/C1.tex}}\end{table}
+\noindent\textbf{Interpretación.} Solo la pechuga de pollo está bajo su mínimo (holgura $-944$\,g). Le sigue el azúcar, con 553\,g sobre el umbral (1,3 veces el mínimo); el resto supera el doble de su mínimo. La consulta ordena por la razón stock/mínimo para que el insumo más crítico aparezca primero. Esta es la lista que en el AS-IS solo aparecía cuando el insumo ya faltaba en cocina.
+
+\subsubsection*{C2. Sugerencia de reposición (RF08)}
+\begin{lstlisting}
+-- extracto: se sugiere pedir solo si (stock + en tránsito) <= punto de reorden
+CASE WHEN s.stock_actual + COALESCE(t.en_transito, 0)
+          <= s.stock_minimo + c.consumo_diario * p.lead_dias
+     THEN ROUND(s.stock_minimo + c.consumo_diario * (p.lead_dias + 4)
+                - s.stock_actual - COALESCE(t.en_transito, 0), 0)
+     ELSE 0 END AS sugerido_pedir
+\end{lstlisting}
+\begin{table}[H]\centering\tablasize\setlength{\tabcolsep}{4pt}\adjustbox{max width=\textwidth}{\input{tablas/C2.tex}}\end{table}
+\noindent\textbf{Interpretación.} El consumo diario es el promedio calendario de los últimos 14 días (consumo + merma), y el punto de reorden es el mínimo más el consumo durante el plazo del proveedor habitual. Al corte, ningún insumo requiere un pedido \emph{nuevo}. El pollo, pese a estar bajo mínimo, cubre 6 días contando lo que viene en camino. Los insumos con menor cobertura son el pan (2,3 días) y la palta (2,9 días); ambos tienen plazo de un día y están sobre su punto de reorden, por lo que serán los primeros en gatillar pedido. Esta consulta reemplaza la decisión ``al ojo'' por una regla explícita que el encargado valida (tarea ``Validar sugerencia y ajustar cantidades'').
+
+\subsubsection*{C3. Compras de urgencia y sobrecosto (KPI de costo)}
+\begin{table}[H]\centering\tablasize\adjustbox{max width=\textwidth}{\input{tablas/C3.tex}}\end{table}
+\noindent\textbf{Interpretación.} El sobrecosto se mide contra el precio promedio ponderado de las compras no urgentes del mismo insumo. En el periodo hubo 7 urgencias que costaron \$42.068 más que comprarle al proveedor habitual. La proporción sube de 4,1\,\% en octubre a 19,2\,\% en noviembre, y cuatro de las cinco urgencias de noviembre son de pollo (ver C6 y C8). Para Bob's Coffee este indicador es el más directo de la Entrega~1: si el SIG funciona, la urgencia pasa de ser rutina a ser una excepción medida.
+
+\subsubsection*{C4. Exactitud de inventario por conteo (KPI de error)}
+\begin{table}[H]\centering\tablasize\adjustbox{max width=\textwidth}{\input{tablas/C4.tex}}\end{table}
+\noindent\textbf{Interpretación.} Los 48 conteos encontraron \emph{menos} existencias que las teóricas: la diferencia neta es negativa en los ocho insumos. Un error aleatorio de conteo daría diferencias de ambos signos; un sesgo sistemático negativo es la firma del consumo no registrado (en estos datos, simulado entre 0 y 8\,\% diario). Los perecibles de alta rotación (huevos, pollo y pan) concentran el error. Para el administrador, la lectura práctica es reforzar el registro del retiro de bodega en esos tres insumos. Con conteos semanales, el sistema arrastra hasta seis días de diferencia; conteos cíclicos más frecuentes en los insumos críticos reducirían esa ventana.
+
+\subsubsection*{C5. Merma valorizada (KPI de merma)}
+\begin{table}[H]\centering\tablasize\adjustbox{max width=\textwidth}{\input{tablas/C5.tex}}\end{table}
+\noindent\textbf{Interpretación.} La merma total del periodo es de \$38.005, valorizada a precio promedio de compra. El pollo concentra \$14.166 (37\,\%) y el pan \$12.192 (32\,\%). En ambos, el motivo principal es el ``error de preparación'', no el vencimiento, lo que apunta a estandarizar porciones más que a comprar menos.
+
+\subsubsection*{C6. Cumplimiento de proveedores}
+\begin{table}[H]\centering\tablasize\setlength{\tabcolsep}{4pt}\adjustbox{max width=\textwidth}{\input{tablas/C6.tex}}\end{table}
+\noindent\textbf{Interpretación.} La avícola entrega todo lo pedido, pero con el mayor atraso medio (0,69 días) y 7 líneas atrasadas en 14 órdenes. Con un plazo de 2 días y un mínimo de 4\,kg (poco más de un día de consumo), cada atraso del pollo se convierte en una compra de urgencia. Hay dos acciones posibles respaldadas por datos: subir el stock mínimo de pollo o habilitar un segundo proveedor en \texttt{insumo\_proveedor}.
+
+\subsubsection*{C7. Kardex trazable de un insumo (RF06, RF09)}
+\begin{table}[H]\centering\tablasize\setlength{\tabcolsep}{4pt}\adjustbox{max width=\textwidth}{\input{tablas/C7.tex}}\end{table}
+\noindent\textbf{Interpretación.} El saldo acumulado (función de ventana \texttt{SUM() OVER}) reconstruye la existencia de la palta en cualquier momento, con su responsable y su motivo. El saldo final de 4.378\,g coincide con C1, lo que valida que la vista de stock y el libro de movimientos son consistentes. Es la respuesta a la pregunta ``¿quién movió qué y cuándo?'' que el AS-IS no podía contestar.
+
+\subsubsection*{C8. Órdenes abiertas atrasadas}
+\begin{table}[H]\centering\tablasize\setlength{\tabcolsep}{3pt}\adjustbox{max width=\textwidth}{\input{tablas/C8.tex}}\end{table}
+\noindent\textbf{Interpretación.} Explica por qué C1 y C2 parecen contradecirse en el pollo: hay stock bajo mínimo, pero la orden~68 (16.743\,g) está atrasada un día. La acción no es comprar más, sino contactar a la avícola, y si no confirma entrega ese mismo día, recurrir a una compra de urgencia acotada. Esta consulta es la segunda fuente del flujo n8n.
+
+\newpage
+% ======================= 6. GUÍA =======================
+\section{Guía breve del trabajo}
+\label{sec:guia}
+La guía completa está en el \texttt{README.md} del repositorio. En resumen, con MySQL~8.0.29 o superior:
+\begin{lstlisting}[language=bash,morekeywords={git,cd,mysql}]
+git clone https://github.com/Sergi9787/ICN292-Martinez-Sergio.git
+cd ICN292-Martinez-Sergio
+mysql -u root -p < sql/schema.sql      # crea la base: Tablas 11, Vistas 2, Disparadores 8
+mysql -u root -p < sql/seed.sql        # carga los datos y muestra el conteo de filas
+mysql -u root -p --table < sql/consultas.sql   # ejecuta C1 a C8
+\end{lstlisting}
+\texttt{schema.sql} usa \texttt{CREATE ... IF NOT EXISTS}; para recargar desde cero, primero se ejecuta \texttt{DROP DATABASE bobs\_coffee\_final;}. El seed puede regenerarse con \texttt{python3 gen\_seed.py} (misma semilla, mismo resultado). Para la automatización se importa \texttt{n8n/alerta\_stock\_minimo.json} en n8n, se configuran las credenciales MySQL y SMTP y se ejecuta con \emph{Execute workflow}.
+
+{\tablasize
+\begin{longtable}{>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{9.4cm}}
+\caption{Archivos del repositorio que respaldan este informe}\label{tab:repo}\\
+\toprule \textbf{Archivo} & \textbf{Contenido} \\ \midrule
+\texttt{README.md} & Lógica del repositorio y pasos de ejecución. \\
+\texttt{docs/00-caso-pyme.md} \ldots\ \texttt{05-automatizacion-n8n.md} & Caso, requerimientos, BPMN, modelo de datos, SQL y automatización. \\
+\texttt{sql/schema.sql}, \texttt{sql/seed.sql}, \texttt{sql/consultas.sql} & Esquema, datos y consultas C1--C8. \\
+\texttt{gen\_seed.py} & Generador reproducible de los datos sintéticos. \\
+\texttt{n8n/alerta\_stock\_minimo.json} & Flujo n8n exportado. \\
+\texttt{informe/}, \texttt{presentacion/} & Este informe (PDF + \LaTeX) y las diapositivas de la defensa. \\
+\texttt{DECLARACION\_IA.md}, \texttt{CHANGELOG.md} & Uso de IA y cambios relevantes desde la E1. \\
+\bottomrule
+\end{longtable}
+}
+
+% ======================= 7. LECCIONES =======================
+\section{Lecciones aprendidas y limitaciones}
+\label{sec:lecciones}
+
+\subsection{Lecciones aprendidas}
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{No guardar lo que se puede calcular.} En el diseño inicial se pensó en un campo de stock por insumo. Modelar el stock como suma de movimientos eliminó la posibilidad misma del descuadre interno y dejó gratis el kardex y la auditoría.
+  \item \textbf{El ER corrige al BPMN.} Al buscar la tabla de cada tarea apareció que ``Calcular insumos según receta'' no tenía respaldo en los datos y contradecía el alcance. Revisar proceso y datos en conjunto evitó prometer una función que no existía.
+  \item \textbf{Las reglas importantes van en la base, no solo en la aplicación.} Los disparadores impiden registrar una entrada que no coincide con lo aceptado o editar un conteo ya ajustado, sin importar desde dónde se escriba el dato.
+  \item \textbf{Una alerta útil cruza fuentes.} Comparar stock contra mínimo habría sugerido una compra duplicada de pollo; incluir lo que viene en tránsito y su atraso transforma la alerta en una decisión correcta.
+\end{itemize}
+
+\subsection{Limitaciones honestas}
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Datos sintéticos.} Los resultados de C1--C8 son reales respecto de la base, pero la base no es Bob's Coffee. Las cifras (urgencias, error de conteo, merma) dependen de los supuestos de la simulación y \emph{no} deben leerse como impacto medido en el local. Validarlas con datos reales del administrador es el paso siguiente.
+  \item \textbf{Estado de la orden mantenido a mano.} \texttt{orden\_compra.estado} no se actualiza automáticamente al registrar recepciones, por lo que podría quedar inconsistente. Se propone un disparador \texttt{AFTER INSERT} en \texttt{detalle\_recepcion} o reemplazar el estado por una vista.
+  \item \textbf{Trazabilidad incompleta en documentos.} \texttt{orden\_compra} y \texttt{recepcion} no registran el usuario que emite o recibe; hoy esa identidad se conoce por el movimiento de entrada. Agregar \texttt{id\_usuario} completaría RF09.
+  \item \textbf{Saldos de órdenes parciales.} Si un proveedor nunca completa una orden \texttt{PARCIAL}, su saldo sigue contando como ``en tránsito'' en C2. Falta un estado de cierre con faltante (por ejemplo, \texttt{CERRADA\_INCOMPLETA}).
+  \item \textbf{Sin interfaz ni control de acceso operativo.} El rol se guarda, pero no hay una capa de aplicación que lo haga cumplir (RNF02); la interfaz web de la Entrega~1 queda como trabajo futuro.
+  \item \textbf{Automatización no desplegada en producción.} El flujo n8n se entrega exportado y sus consultas y su lógica fueron probadas por separado; requiere una instancia de n8n con acceso a la base y credenciales SMTP reales.
+  \item \textbf{Sugerencia simple.} C2 usa promedio móvil y cobertura fija de 4 días. No considera estacionalidad ni la variabilidad del consumo para calcular un stock de seguridad.
+\end{itemize}
+
+\end{document}
