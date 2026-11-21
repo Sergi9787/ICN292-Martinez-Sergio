@@ -1,0 +1,232 @@
+{
+  "name": "Bob's Coffee - Alerta diaria de stock mínimo",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-6"
+            }
+          ]
+        }
+      },
+      "id": "fb97635f-3aae-440d-b26e-4d08b4bcefb2",
+      "name": "Ciclo diario 07:00 (lun-sáb)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.nombre, s.unidad_base, ROUND(s.stock_actual,0) AS stock, ROUND(s.stock_minimo,0) AS minimo, ROUND(COALESCE(t.en_transito,0),0) AS en_transito FROM bobs_coffee_final.v_stock_bajo s LEFT JOIN (SELECT d.id_insumo, SUM(d.cantidad_solicitada_base - COALESCE(r.recibido,0)) AS en_transito FROM bobs_coffee_final.detalle_orden d JOIN bobs_coffee_final.orden_compra o ON o.id_orden = d.id_orden LEFT JOIN (SELECT id_detalle, SUM(cantidad_recibida_base) AS recibido FROM bobs_coffee_final.detalle_recepcion GROUP BY id_detalle) r ON r.id_detalle = d.id_detalle WHERE o.estado IN ('EMITIDA','PARCIAL') GROUP BY d.id_insumo) t ON t.id_insumo = s.id_insumo ORDER BY s.stock_actual / s.stock_minimo;",
+        "options": {}
+      },
+      "id": "f4adb3b0-d2b0-4585-a6a9-4c9454cfde42",
+      "name": "Stock bajo mínimo",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        96
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "KUwIwlg7LZffipJn",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    o.id_orden,\n    pr.nombre AS proveedor,\n    i.nombre AS insumo,\n    DATEDIFF(\n        DATE('2026-11-14'),\n        DATE_ADD(\n            o.fecha_emision,\n            INTERVAL ip.plazo_entrega_dias DAY\n        )\n    ) AS dias_atraso\nFROM bobs_coffee_final.orden_compra o\nJOIN bobs_coffee_final.proveedor pr\n    ON pr.id_proveedor = o.id_proveedor\nJOIN bobs_coffee_final.detalle_orden d\n    ON d.id_orden = o.id_orden\nJOIN bobs_coffee_final.insumo i\n    ON i.id_insumo = d.id_insumo\nJOIN bobs_coffee_final.insumo_proveedor ip\n    ON ip.id_insumo = d.id_insumo\n    AND ip.id_proveedor = o.id_proveedor\nWHERE o.estado IN ('EMITIDA', 'PARCIAL')\n  AND DATE_ADD(\n      o.fecha_emision,\n      INTERVAL ip.plazo_entrega_dias DAY\n  ) < DATE('2026-11-14')\nORDER BY dias_atraso DESC;",
+        "options": {}
+      },
+      "id": "c1ad3cc4-b2cc-458b-a565-ddd5686ad475",
+      "name": "OC atrasadas",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        480,
+        96
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "mySql": {
+          "id": "KUwIwlg7LZffipJn",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const bajo = $('Stock bajo mínimo').all()\n  .map(item => item.json)\n  .filter(r => r.nombre);\n\nconst atrasadas = $('OC atrasadas').all()\n  .map(item => item.json)\n  .filter(r => r.id_orden);\n\n// Fecha de corte de los datos de la demostración.\nconst fecha = '2026-11-14';\nconst lineas = [];\n\nfor (const r of bajo) {\n  const accion = Number(r.en_transito) > 0\n    ? `Hay ${r.en_transito} ${r.unidad_base} en tránsito: revisar la orden pendiente antes de comprar.`\n    : 'Revisar sugerencia de reposición y emitir orden de compra.';\n\n  lineas.push(\n    `${r.nombre}: stock ${r.stock} ${r.unidad_base}, mínimo ${r.minimo}. ${accion}`\n  );\n}\n\nfor (const r of atrasadas) {\n  lineas.push(\n    `OC ${r.id_orden}: ${r.proveedor}, ${r.insumo}, atraso de ${r.dias_atraso} día(s). Contactar al proveedor.`\n  );\n}\n\nreturn [{\n  json: {\n    hay_alertas: lineas.length > 0,\n    asunto: `[Bob's Coffee] Alerta de inventario — ${fecha}`,\n    cuerpo: [\n      `Revisión del inventario al ${fecha}`,\n      '',\n      ...lineas,\n      '',\n      'Demostración con datos sintéticos de Bob’s Coffee.'\n    ].join('\\n')\n  }\n}];"
+      },
+      "id": "882efaad-0e04-49a8-93bb-cee11e0d3395",
+      "name": "Armar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        96
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hay_alertas }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f1c9314c-51f3-492a-87ed-6eba933debad",
+      "name": "¿Hay alertas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        960,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "martinazul233@gmail.com",
+        "toEmail": "martinazul233@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "emailFormat": "text",
+        "text": "={{ $json.cuerpo }}",
+        "options": {}
+      },
+      "id": "e1bd3acd-85fa-4f7b-85fa-0056e2f94e43",
+      "name": "Enviar alerta a Administrador y Compras",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        0
+      ],
+      "webhookId": "f5014c7f-02af-4c97-be14-6458ecc57b28",
+      "credentials": {
+        "smtp": {
+          "id": "I97dSiUgLtZXTx44",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "78daf7c7-f697-40be-9b68-2aed316ad8c6",
+      "name": "Sin reposición requerida",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Ciclo diario 07:00 (lun-sáb)": {
+      "main": [
+        [
+          {
+            "node": "Stock bajo mínimo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock bajo mínimo": {
+      "main": [
+        [
+          {
+            "node": "OC atrasadas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OC atrasadas": {
+      "main": [
+        [
+          {
+            "node": "Armar mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Hay alertas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay alertas?": {
+      "main": [
+        [
+          {
+            "node": "Enviar alerta a Administrador y Compras",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sin reposición requerida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c24313bc-7629-43ce-8eac-8ae6a76fb83c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e7d6a28b1805279261739fab447ad719239d765b5c6e0632858e3d665c304f31"
+  },
+  "nodeGroups": [],
+  "id": "EDBhjVdWwZvKAjvq",
+  "tags": []
+}
